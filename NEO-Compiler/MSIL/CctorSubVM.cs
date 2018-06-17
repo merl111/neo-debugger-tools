@@ -180,7 +180,7 @@ namespace Neo.Compiler.MSIL
                                         }
                                         if (attrname == "ToScriptHash")//AddressString2ScriptHashBytes to bytes
                                         {
-                                            var bytes = Lux.Cryptography.Base58.Decode(text);
+                                            var bytes = NEO.AllianceOfThinWallet.Cryptography.Base58.Decode(text);
                                             var hash = bytes.Skip(1).Take(20).ToArray();
                                             calcStack.Push(hash);
                                         }
@@ -200,6 +200,14 @@ namespace Neo.Compiler.MSIL
                             var field = src.tokenUnknown as Mono.Cecil.FieldReference;
                             var fname = field.DeclaringType.FullName + "::" + field.Name;
                             to.staticfields[fname] = calcStack.Pop();
+                        }
+                        break;
+                    case CodeEx.Stelem_I1:
+                        {
+                            var v =(byte)(int)calcStack.Pop();
+                            var index =(int)calcStack.Pop();
+                            var array = calcStack.Pop() as byte[];
+                            array[index] = v;
                         }
                         break;
                 }

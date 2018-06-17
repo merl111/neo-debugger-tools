@@ -63,9 +63,11 @@ namespace Neo.Compiler.MSIL
 
         ILogger logger;
         public NeoModule outModule;
+        ILModule inModule;
         public Dictionary<ILMethod, NeoMethod> methodLink = new Dictionary<ILMethod, NeoMethod>();
         public NeoModule Convert(ILModule _in)
         {
+            this.inModule = _in;
             //logger.Log("beginConvert.");
             this.outModule = new NeoModule(this.logger);
             foreach (var t in _in.mapType)
@@ -120,16 +122,17 @@ namespace Neo.Compiler.MSIL
                 }
             }
 
-
-            foreach (var t in _in.mapType)
+            var keys = new List<string>(_in.mapType.Keys);
+            foreach (var key in keys)
             {
-                if (t.Key.Contains("<"))
+                var value = _in.mapType[key];
+                if (key.Contains("<"))
                     continue;//系统的，不要
-                if (t.Key.Contains("_API_")) continue;//api的，不要
-                if (t.Key.Contains(".My."))
+                if (key.Contains("_API_")) continue;//api的，不要
+                if (key.Contains(".My."))
                     continue;//vb system
 
-                foreach (var m in t.Value.methods)
+                foreach (var m in value.methods)
                 {
 
                     if (m.Value.method == null) continue;
@@ -347,26 +350,26 @@ namespace Neo.Compiler.MSIL
         //}
         static int getNumber(NeoCode code)
         {
-            if (code.code <= Lux.VM.OpCode.PUSHBYTES75 && code.code >= Lux.VM.OpCode.PUSHBYTES1)
+            if (code.code <= VM.OpCode.PUSHBYTES75 && code.code >= VM.OpCode.PUSHBYTES1)
                 return (int)new BigInteger(code.bytes);
-            else if (code.code == Lux.VM.OpCode.PUSH0) return 0;
-            else if (code.code == Lux.VM.OpCode.PUSH1) return 1;
-            else if (code.code == Lux.VM.OpCode.PUSH2) return 2;
-            else if (code.code == Lux.VM.OpCode.PUSH3) return 3;
-            else if (code.code == Lux.VM.OpCode.PUSH4) return 4;
-            else if (code.code == Lux.VM.OpCode.PUSH5) return 5;
-            else if (code.code == Lux.VM.OpCode.PUSH6) return 6;
-            else if (code.code == Lux.VM.OpCode.PUSH7) return 7;
-            else if (code.code == Lux.VM.OpCode.PUSH8) return 8;
-            else if (code.code == Lux.VM.OpCode.PUSH9) return 9;
-            else if (code.code == Lux.VM.OpCode.PUSH10) return 10;
-            else if (code.code == Lux.VM.OpCode.PUSH11) return 11;
-            else if (code.code == Lux.VM.OpCode.PUSH12) return 12;
-            else if (code.code == Lux.VM.OpCode.PUSH13) return 13;
-            else if (code.code == Lux.VM.OpCode.PUSH14) return 14;
-            else if (code.code == Lux.VM.OpCode.PUSH15) return 15;
-            else if (code.code == Lux.VM.OpCode.PUSH16) return 16;
-            else if (code.code == Lux.VM.OpCode.PUSHDATA1) return pushdata1bytes2int(code.bytes);
+            else if (code.code == VM.OpCode.PUSH0) return 0;
+            else if (code.code == VM.OpCode.PUSH1) return 1;
+            else if (code.code == VM.OpCode.PUSH2) return 2;
+            else if (code.code == VM.OpCode.PUSH3) return 3;
+            else if (code.code == VM.OpCode.PUSH4) return 4;
+            else if (code.code == VM.OpCode.PUSH5) return 5;
+            else if (code.code == VM.OpCode.PUSH6) return 6;
+            else if (code.code == VM.OpCode.PUSH7) return 7;
+            else if (code.code == VM.OpCode.PUSH8) return 8;
+            else if (code.code == VM.OpCode.PUSH9) return 9;
+            else if (code.code == VM.OpCode.PUSH10) return 10;
+            else if (code.code == VM.OpCode.PUSH11) return 11;
+            else if (code.code == VM.OpCode.PUSH12) return 12;
+            else if (code.code == VM.OpCode.PUSH13) return 13;
+            else if (code.code == VM.OpCode.PUSH14) return 14;
+            else if (code.code == VM.OpCode.PUSH15) return 15;
+            else if (code.code == VM.OpCode.PUSH16) return 16;
+            else if (code.code == VM.OpCode.PUSHDATA1) return pushdata1bytes2int(code.bytes);
             else
                 throw new Exception("not support getNumber From this:" + code.ToString());
         }
@@ -408,14 +411,14 @@ namespace Neo.Compiler.MSIL
             switch (src.code)
             {
                 case CodeEx.Nop:
-                    _Convert1by1(Lux.VM.OpCode.NOP, src, to);
+                    _Convert1by1(VM.OpCode.NOP, src, to);
                     break;
                 case CodeEx.Ret:
                     //return 在外面特殊处理了
-                    _Insert1(Lux.VM.OpCode.RET, null, to);
+                    _Insert1(VM.OpCode.RET, null, to);
                     break;
                 case CodeEx.Pop:
-                    _Convert1by1(Lux.VM.OpCode.DROP, src, to);
+                    _Convert1by1(VM.OpCode.DROP, src, to);
                     break;
 
                 case CodeEx.Ldnull:
@@ -523,7 +526,7 @@ namespace Neo.Compiler.MSIL
                 case CodeEx.Leave:
                 case CodeEx.Leave_S:
                     {
-                        var code = _Convert1by1(Lux.VM.OpCode.JMP, src, to, new byte[] { 0, 0 });
+                        var code = _Convert1by1(VM.OpCode.JMP, src, to, new byte[] { 0, 0 });
                         code.needfix = true;
                         code.srcaddr = src.tokenAddr_Index;
                     }
@@ -537,7 +540,7 @@ namespace Neo.Compiler.MSIL
                         //var data = BitConverter.GetBytes(shortaddrcount);
                         //addrdata[0] = data[0];
                         //addrdata[1] = data[1];
-                        //var code = _Convert1by1(Lux.VM.OpCode.SWITCH, src, to, addrdata);
+                        //var code = _Convert1by1(VM.OpCode.SWITCH, src, to, addrdata);
                         //code.needfix = true;
                         //code.srcaddrswitch = new int[shortaddrcount];
                         //for (var i = 0; i < shortaddrcount; i++)
@@ -549,7 +552,7 @@ namespace Neo.Compiler.MSIL
                 case CodeEx.Brtrue:
                 case CodeEx.Brtrue_S:
                     {
-                        var code = _Convert1by1(Lux.VM.OpCode.JMPIF, src, to, new byte[] { 0, 0 });
+                        var code = _Convert1by1(VM.OpCode.JMPIF, src, to, new byte[] { 0, 0 });
                         code.needfix = true;
                         code.srcaddr = src.tokenAddr_Index;
                     }
@@ -557,7 +560,7 @@ namespace Neo.Compiler.MSIL
                 case CodeEx.Brfalse:
                 case CodeEx.Brfalse_S:
                     {
-                        var code = _Convert1by1(Lux.VM.OpCode.JMPIFNOT, src, to, new byte[] { 0, 0 });
+                        var code = _Convert1by1(VM.OpCode.JMPIFNOT, src, to, new byte[] { 0, 0 });
                         code.needfix = true;
                         code.srcaddr = src.tokenAddr_Index;
                     }
@@ -565,8 +568,8 @@ namespace Neo.Compiler.MSIL
                 case CodeEx.Beq:
                 case CodeEx.Beq_S:
                     {
-                        _Convert1by1(Lux.VM.OpCode.NUMEQUAL, src, to);
-                        var code = _Convert1by1(Lux.VM.OpCode.JMPIF, null, to, new byte[] { 0, 0 });
+                        _Convert1by1(VM.OpCode.NUMEQUAL, src, to);
+                        var code = _Convert1by1(VM.OpCode.JMPIF, null, to, new byte[] { 0, 0 });
                         code.needfix = true;
                         code.srcaddr = src.tokenAddr_Index;
                     }
@@ -574,12 +577,12 @@ namespace Neo.Compiler.MSIL
                 case CodeEx.Bne_Un:
                 case CodeEx.Bne_Un_S:
                     {
-                        _Convert1by1(Lux.VM.OpCode.ABS, src, to);
-                        _Convert1by1(Lux.VM.OpCode.SWAP, null, to);
-                        _Convert1by1(Lux.VM.OpCode.ABS, null, to);
-                        _Convert1by1(Lux.VM.OpCode.SWAP, null, to);
-                        _Convert1by1(Lux.VM.OpCode.NUMNOTEQUAL, null, to);
-                        var code = _Convert1by1(Lux.VM.OpCode.JMPIF, null, to, new byte[] { 0, 0 });
+                        _Convert1by1(VM.OpCode.ABS, src, to);
+                        _Convert1by1(VM.OpCode.SWAP, null, to);
+                        _Convert1by1(VM.OpCode.ABS, null, to);
+                        _Convert1by1(VM.OpCode.SWAP, null, to);
+                        _Convert1by1(VM.OpCode.NUMNOTEQUAL, null, to);
+                        var code = _Convert1by1(VM.OpCode.JMPIF, null, to, new byte[] { 0, 0 });
                         code.needfix = true;
                         code.srcaddr = src.tokenAddr_Index;
                     }
@@ -587,8 +590,8 @@ namespace Neo.Compiler.MSIL
                 case CodeEx.Blt:
                 case CodeEx.Blt_S:
                     {
-                        _Convert1by1(Lux.VM.OpCode.LT, src, to);
-                        var code = _Convert1by1(Lux.VM.OpCode.JMPIF, null, to, new byte[] { 0, 0 });
+                        _Convert1by1(VM.OpCode.LT, src, to);
+                        var code = _Convert1by1(VM.OpCode.JMPIF, null, to, new byte[] { 0, 0 });
                         code.needfix = true;
                         code.srcaddr = src.tokenAddr_Index;
                     }
@@ -596,12 +599,12 @@ namespace Neo.Compiler.MSIL
                 case CodeEx.Blt_Un:
                 case CodeEx.Blt_Un_S:
                     {
-                        _Convert1by1(Lux.VM.OpCode.ABS, src, to);
-                        _Convert1by1(Lux.VM.OpCode.SWAP, null, to);
-                        _Convert1by1(Lux.VM.OpCode.ABS, null, to);
-                        _Convert1by1(Lux.VM.OpCode.SWAP, null, to);
-                        _Convert1by1(Lux.VM.OpCode.LT, null, to);
-                        var code = _Convert1by1(Lux.VM.OpCode.JMPIF, null, to, new byte[] { 0, 0 });
+                        _Convert1by1(VM.OpCode.ABS, src, to);
+                        _Convert1by1(VM.OpCode.SWAP, null, to);
+                        _Convert1by1(VM.OpCode.ABS, null, to);
+                        _Convert1by1(VM.OpCode.SWAP, null, to);
+                        _Convert1by1(VM.OpCode.LT, null, to);
+                        var code = _Convert1by1(VM.OpCode.JMPIF, null, to, new byte[] { 0, 0 });
                         code.needfix = true;
                         code.srcaddr = src.tokenAddr_Index;
                     }
@@ -609,8 +612,8 @@ namespace Neo.Compiler.MSIL
                 case CodeEx.Ble:
                 case CodeEx.Ble_S:
                     {
-                        _Convert1by1(Lux.VM.OpCode.LTE, src, to);
-                        var code = _Convert1by1(Lux.VM.OpCode.JMPIF, null, to, new byte[] { 0, 0 });
+                        _Convert1by1(VM.OpCode.LTE, src, to);
+                        var code = _Convert1by1(VM.OpCode.JMPIF, null, to, new byte[] { 0, 0 });
                         code.needfix = true;
                         code.srcaddr = src.tokenAddr_Index;
                     }
@@ -618,12 +621,12 @@ namespace Neo.Compiler.MSIL
                 case CodeEx.Ble_Un:
                 case CodeEx.Ble_Un_S:
                     {
-                        _Convert1by1(Lux.VM.OpCode.ABS, src, to);
-                        _Convert1by1(Lux.VM.OpCode.SWAP, null, to);
-                        _Convert1by1(Lux.VM.OpCode.ABS, null, to);
-                        _Convert1by1(Lux.VM.OpCode.SWAP, null, to);
-                        _Convert1by1(Lux.VM.OpCode.LTE, null, to);
-                        var code = _Convert1by1(Lux.VM.OpCode.JMPIF, null, to, new byte[] { 0, 0 });
+                        _Convert1by1(VM.OpCode.ABS, src, to);
+                        _Convert1by1(VM.OpCode.SWAP, null, to);
+                        _Convert1by1(VM.OpCode.ABS, null, to);
+                        _Convert1by1(VM.OpCode.SWAP, null, to);
+                        _Convert1by1(VM.OpCode.LTE, null, to);
+                        var code = _Convert1by1(VM.OpCode.JMPIF, null, to, new byte[] { 0, 0 });
                         code.needfix = true;
                         code.srcaddr = src.tokenAddr_Index;
                     }
@@ -631,8 +634,8 @@ namespace Neo.Compiler.MSIL
                 case CodeEx.Bgt:
                 case CodeEx.Bgt_S:
                     {
-                        _Convert1by1(Lux.VM.OpCode.GT, src, to);
-                        var code = _Convert1by1(Lux.VM.OpCode.JMPIF, null, to, new byte[] { 0, 0 });
+                        _Convert1by1(VM.OpCode.GT, src, to);
+                        var code = _Convert1by1(VM.OpCode.JMPIF, null, to, new byte[] { 0, 0 });
                         code.needfix = true;
                         code.srcaddr = src.tokenAddr_Index;
                     }
@@ -640,12 +643,12 @@ namespace Neo.Compiler.MSIL
                 case CodeEx.Bgt_Un:
                 case CodeEx.Bgt_Un_S:
                     {
-                        _Convert1by1(Lux.VM.OpCode.ABS, src, to);
-                        _Convert1by1(Lux.VM.OpCode.SWAP, null, to);
-                        _Convert1by1(Lux.VM.OpCode.ABS, null, to);
-                        _Convert1by1(Lux.VM.OpCode.SWAP, null, to);
-                        _Convert1by1(Lux.VM.OpCode.GT, null, to);
-                        var code = _Convert1by1(Lux.VM.OpCode.JMPIF, null, to, new byte[] { 0, 0 });
+                        _Convert1by1(VM.OpCode.ABS, src, to);
+                        _Convert1by1(VM.OpCode.SWAP, null, to);
+                        _Convert1by1(VM.OpCode.ABS, null, to);
+                        _Convert1by1(VM.OpCode.SWAP, null, to);
+                        _Convert1by1(VM.OpCode.GT, null, to);
+                        var code = _Convert1by1(VM.OpCode.JMPIF, null, to, new byte[] { 0, 0 });
                         code.needfix = true;
                         code.srcaddr = src.tokenAddr_Index;
                     }
@@ -654,8 +657,8 @@ namespace Neo.Compiler.MSIL
                 case CodeEx.Bge_S:
                     {
 
-                        _Convert1by1(Lux.VM.OpCode.GTE, src, to);
-                        var code = _Convert1by1(Lux.VM.OpCode.JMPIF, null, to, new byte[] { 0, 0 });
+                        _Convert1by1(VM.OpCode.GTE, src, to);
+                        var code = _Convert1by1(VM.OpCode.JMPIF, null, to, new byte[] { 0, 0 });
                         code.needfix = true;
                         code.srcaddr = src.tokenAddr_Index;
                     }
@@ -663,12 +666,12 @@ namespace Neo.Compiler.MSIL
                 case CodeEx.Bge_Un:
                 case CodeEx.Bge_Un_S:
                     {
-                        _Convert1by1(Lux.VM.OpCode.ABS, src, to);
-                        _Convert1by1(Lux.VM.OpCode.SWAP, null, to);
-                        _Convert1by1(Lux.VM.OpCode.ABS, null, to);
-                        _Convert1by1(Lux.VM.OpCode.SWAP, null, to);
-                        _Convert1by1(Lux.VM.OpCode.GTE, null, to);
-                        var code = _Convert1by1(Lux.VM.OpCode.JMPIF, null, to, new byte[] { 0, 0 });
+                        _Convert1by1(VM.OpCode.ABS, src, to);
+                        _Convert1by1(VM.OpCode.SWAP, null, to);
+                        _Convert1by1(VM.OpCode.ABS, null, to);
+                        _Convert1by1(VM.OpCode.SWAP, null, to);
+                        _Convert1by1(VM.OpCode.GTE, null, to);
+                        var code = _Convert1by1(VM.OpCode.JMPIF, null, to, new byte[] { 0, 0 });
                         code.needfix = true;
                         code.srcaddr = src.tokenAddr_Index;
                     }
@@ -676,69 +679,69 @@ namespace Neo.Compiler.MSIL
 
                 //Stack
                 case CodeEx.Dup:
-                    _Convert1by1(Lux.VM.OpCode.DUP, src, to);
+                    _Convert1by1(VM.OpCode.DUP, src, to);
                     break;
 
                 //Bitwise logic
                 case CodeEx.And:
-                    _Convert1by1(Lux.VM.OpCode.AND, src, to);
+                    _Convert1by1(VM.OpCode.AND, src, to);
                     break;
                 case CodeEx.Or:
-                    _Convert1by1(Lux.VM.OpCode.OR, src, to);
+                    _Convert1by1(VM.OpCode.OR, src, to);
                     break;
                 case CodeEx.Xor:
-                    _Convert1by1(Lux.VM.OpCode.XOR, src, to);
+                    _Convert1by1(VM.OpCode.XOR, src, to);
                     break;
                 case CodeEx.Not:
-                    _Convert1by1(Lux.VM.OpCode.INVERT, src, to);
+                    _Convert1by1(VM.OpCode.INVERT, src, to);
                     break;
 
                 //math
                 case CodeEx.Add:
                 case CodeEx.Add_Ovf:
                 case CodeEx.Add_Ovf_Un:
-                    _Convert1by1(Lux.VM.OpCode.ADD, src, to);
+                    _Convert1by1(VM.OpCode.ADD, src, to);
                     break;
                 case CodeEx.Sub:
                 case CodeEx.Sub_Ovf:
                 case CodeEx.Sub_Ovf_Un:
-                    _Convert1by1(Lux.VM.OpCode.SUB, src, to);
+                    _Convert1by1(VM.OpCode.SUB, src, to);
                     break;
                 case CodeEx.Mul:
                 case CodeEx.Mul_Ovf:
                 case CodeEx.Mul_Ovf_Un:
-                    _Convert1by1(Lux.VM.OpCode.MUL, src, to);
+                    _Convert1by1(VM.OpCode.MUL, src, to);
                     break;
                 case CodeEx.Div:
                 case CodeEx.Div_Un:
-                    _Convert1by1(Lux.VM.OpCode.DIV, src, to);
+                    _Convert1by1(VM.OpCode.DIV, src, to);
                     break;
                 case CodeEx.Rem:
                 case CodeEx.Rem_Un:
-                    _Convert1by1(Lux.VM.OpCode.MOD, src, to);
+                    _Convert1by1(VM.OpCode.MOD, src, to);
                     break;
                 case CodeEx.Neg:
-                    _Convert1by1(Lux.VM.OpCode.NEGATE, src, to);
+                    _Convert1by1(VM.OpCode.NEGATE, src, to);
                     break;
                 case CodeEx.Shl:
-                    _Convert1by1(Lux.VM.OpCode.SHL, src, to);
+                    _Convert1by1(VM.OpCode.SHL, src, to);
                     break;
                 case CodeEx.Shr:
                 case CodeEx.Shr_Un:
-                    _Convert1by1(Lux.VM.OpCode.SHR, src, to);
+                    _Convert1by1(VM.OpCode.SHR, src, to);
                     break;
 
                 //logic
                 case CodeEx.Clt:
                 case CodeEx.Clt_Un:
-                    _Convert1by1(Lux.VM.OpCode.LT, src, to);
+                    _Convert1by1(VM.OpCode.LT, src, to);
                     break;
                 case CodeEx.Cgt:
                 case CodeEx.Cgt_Un:
-                    _Convert1by1(Lux.VM.OpCode.GT, src, to);
+                    _Convert1by1(VM.OpCode.GT, src, to);
                     break;
                 case CodeEx.Ceq:
-                    _Convert1by1(Lux.VM.OpCode.NUMEQUAL, src, to);
+                    _Convert1by1(VM.OpCode.NUMEQUAL, src, to);
                     break;
 
                 //call
@@ -756,7 +759,7 @@ namespace Neo.Compiler.MSIL
                 //array
                 case CodeEx.Ldelem_U1://用意为byte[] 取一部分.....
                     _ConvertPush(1, src, to);
-                    _Convert1by1(Lux.VM.OpCode.SUBSTR, null, to);
+                    _Convert1by1(VM.OpCode.SUBSTR, null, to);
                     break;
                 case CodeEx.Ldelem_Any:
                 case CodeEx.Ldelem_I:
@@ -769,10 +772,10 @@ namespace Neo.Compiler.MSIL
                 case CodeEx.Ldelem_Ref:
                 case CodeEx.Ldelem_U2:
                 case CodeEx.Ldelem_U4:
-                    _Convert1by1(Lux.VM.OpCode.PICKITEM, src, to);
+                    _Convert1by1(VM.OpCode.PICKITEM, src, to);
                     break;
                 case CodeEx.Ldlen:
-                    _Convert1by1(Lux.VM.OpCode.ARRAYSIZE, src, to);
+                    _Convert1by1(VM.OpCode.ARRAYSIZE, src, to);
                     break;
                 case CodeEx.Stelem_Any:
                 case CodeEx.Stelem_I:
@@ -783,7 +786,7 @@ namespace Neo.Compiler.MSIL
                 case CodeEx.Stelem_R4:
                 case CodeEx.Stelem_R8:
                 case CodeEx.Stelem_Ref:
-                    _Convert1by1(Lux.VM.OpCode.SETITEM, src, to);
+                    _Convert1by1(VM.OpCode.SETITEM, src, to);
                     break;
 
                 case CodeEx.Isinst://支持处理as 表达式
@@ -852,7 +855,7 @@ namespace Neo.Compiler.MSIL
                 case CodeEx.Ldsfld:
 
                     {
-                        _Convert1by1(Lux.VM.OpCode.NOP, src, to);
+                        _Convert1by1(VM.OpCode.NOP, src, to);
                         var d = src.tokenUnknown as Mono.Cecil.FieldDefinition;
                         //如果是readonly，可以pull个常量上来的
                         if (
@@ -922,9 +925,9 @@ namespace Neo.Compiler.MSIL
                     break;
                 case CodeEx.Throw:
                     {
-                        _Convert1by1(Lux.VM.OpCode.THROW, src, to);//throw 会让vm 挂起
+                        _Convert1by1(VM.OpCode.THROW, src, to);//throw 会让vm 挂起
                         //不需要再插入return
-                        //_Insert1(Lux.VM.OpCode.RET, "", to);
+                        //_Insert1(VM.OpCode.RET, "", to);
                     }
                     break;
                 default:
